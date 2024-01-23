@@ -81,5 +81,33 @@
 
 ## 주의점
 
-> Secret 에 포함된 데이터는 인코딩된 것이지 암호화된 것이 아니므로 외부에 노출되어서는 안된다!
+> Secret 에 포함된 데이터는 인코딩된 것이지 암호화된 것이 아니므로 외부에 노출되어서는 안되며, 설정을 통해 etcd 내에서 secret 은 암호화된 형태로 저장되도록 한다. 
+
+### 암호화 과정 
+
+etcd 에 저장된 secret 은 설정을 통해 암호화된 형태로 저장되어야 한다. 암호화 설정은 다음과 같다.
+
+- yaml 작성 (/etc/kubernetes/encryption-config.yaml)
+  ```yaml
+    apiVersion: apiserver.config.k8s.io/v1
+    kind: EncryptionConfiguration
+    resources:
+      - resources:
+          - secrets
+        providers:
+          - aescbc:
+              keys:
+                - name: key1
+                  secret: <base64-encoded-secret>
+          - identity: {}
+    ```
+  
+- master 노드 내 api 서버의 config 파일 수정 (/etc/kubernetes/manifests/kube-apiserver.yaml)
+  ```yaml
+  command:
+    - kube-apiserver
+    - --encryption-provider-config=/etc/kubernetes/encryption-config.yaml
+      ...
+  ```
+- api 서버 재시작
 
